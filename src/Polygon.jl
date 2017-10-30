@@ -1,7 +1,8 @@
 import Base.<=
 
-export HPolygon, HPolygonOpt, addconstraint!, is_contained,
+export HPolygon, HPolygonOpt, addconstraint!, is_contained, is_subset_box,
        VPolygon, tovrep, vertices_list
+
 
 """
     HPolygon <: LazySet
@@ -93,6 +94,37 @@ function is_contained(x::Vector{Float64}, P::HPolygon)::Bool
         end
         res
     end
+end
+
+"""
+    is_subset_box(set, sets)
+
+Checks whether a given hyperrectangle-shaped set is a subset of any of the other
+given hyperrectangle-shaped sets.
+
+INPUT:
+
+- ``set`` -- candidate hyperrectangle-shaped set
+- ``sets`` -- array of other hyperrectangle-shaped sets
+"""
+@inline function is_subset_box(set::HPolygon, sets::AbstractVector{HPolygon})::Bool
+    for s in sets
+        if is_subset_single_box(set, s)
+            return true
+        end
+    end
+    return false
+end
+
+@inline function is_subset_single_box(set1::HPolygon, set2::HPolygon)::Bool
+    for i in 1:4
+        # relying on the order of constraints for boxes being the same here,
+        # thus only comparing the constants
+        if set1.constraints[i].b > set2.constraints[i].b
+            return false
+        end
+    end
+    return true
 end
 
 """

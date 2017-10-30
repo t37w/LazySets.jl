@@ -1,6 +1,6 @@
 import Base.*
 
-export CartesianProduct, CartesianProductArray, is_contained
+export CartesianProduct, CartesianProductArray, is_contained, is_subset_box
 
 """
     CartesianProduct <: LazySet
@@ -153,4 +153,32 @@ function is_contained(d::Vector{Float64}, cp::CartesianProductArray)::Bool
         jinit = jend + 1
     end
     return contained
+end
+
+
+"""
+    is_subset_box(set, sets, indices)
+
+Checks whether a given hyperrectangle-shaped Cartesian product set is a subset
+of any of the other given hyperrectangle-shaped Cartesian product sets.
+
+INPUT:
+
+- ``set`` -- candidate hyperrectangle-shaped Cartesian product set
+- ``sets`` -- array of other hyperrectangle-shaped Cartesian product sets
+- ``indices`` -- indices for which we are interested in the subset relation
+"""
+@inline function is_subset_box(set::CartesianProductArray, sets::AbstractVector{CartesianProductArray}, indices::AbstractVector{Int64})::Bool
+    arr1 = set.sfarray
+    for s in sets
+        arr2 = s.sfarray
+        for idx in indices
+            if !HPolygon.is_subset_single_box(arr1[idx], arr2[idx])
+                @goto no_subset
+            end
+        end
+        return true
+        @label no_subset
+    end
+    return false
 end
